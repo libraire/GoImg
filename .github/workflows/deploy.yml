@@ -1,0 +1,30 @@
+name: deployment
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'The service to deploy'
+        required: true
+        default: 'lensman-server'
+        type: choice
+        options:
+        - goimg 
+jobs:
+  goimg:
+    if : ${{ github.event.inputs.app == 'goimg' }}
+    runs-on: indoor
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          docker network create --driver bridge my-network || true
+          docker image prune -f
+
+          docker build -t lensman-server .
+          containers=$(docker ps -q --filter "ancestor=lensman-server")
+          if [[ -n "$containers" ]]; then
+            docker stop $containers
+            docker rm $containers
+          fi
+          docker run -d -p 8080:8080 -v ~/images:/images --name goimg --network my-network goimg
