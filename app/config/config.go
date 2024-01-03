@@ -18,9 +18,9 @@ var (
 )
 
 func Init() {
-	setupLogger()
-	loadConfig()
-	setupDatabase()
+	// setupLogger()
+	// loadConfig()
+	// setupDatabase()
 }
 
 func loadConfig() {
