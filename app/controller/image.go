@@ -12,7 +12,12 @@ func Register(r *gin.Engine) {
 	v1 := r.Group("/api/v1")
 	{
 		v1.POST("upload", upload)
+		v1.GET("health", healthCheck)
 	}
+}
+
+func healthCheck(c *gin.Context) {
+	c.String(http.StatusOK, "OK")
 }
 
 func upload(c *gin.Context) {
