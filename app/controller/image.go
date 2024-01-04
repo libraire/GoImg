@@ -3,6 +3,9 @@ package utility
 import (
 	"net/http"
 	"os"
+	"strconv"
+
+	utils "lensman/app/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,18 +24,45 @@ func healthCheck(c *gin.Context) {
 }
 
 func upload(c *gin.Context) {
+
+	email := c.Request.Context().Value("email").(*string)
+
+	if *email == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	// Retrieve the uploaded file from the form-data
 	file, err := c.FormFile("file")
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to retrieve uploaded file"})
 		return
 	}
 
-	// Create the destination file on the server
-	savePath := "/images/" + file.Filename
+	position := c.Request.FormValue("position")
+	if position == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Position is missing"})
+		return
+	}
+
+	pos, num_err := strconv.Atoi(position)
+
+	if num_err != nil || (pos > 12 || pos < 0) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Position must between 1 to 12"})
+		return
+	}
+
+	err = utils.MakeUserImageFolder(*email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	savePath := utils.GenerateImageSourcePath(*email, uint(pos))
 	output, err := os.Create(savePath)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	defer output.Close()
@@ -40,7 +70,7 @@ func upload(c *gin.Context) {
 	// Save the uploaded file to the destination
 	err = c.SaveUploadedFile(file, savePath)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

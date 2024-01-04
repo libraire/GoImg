@@ -27,4 +27,4 @@ jobs:
             docker stop $containers
             docker rm $containers
           fi
-          docker run -d -p 8080:8080 -v ~/images:/images --name goimg --network my-network goimg
+          docker run -d -p 8000:8080 -v ~/images:/images --name goimg --network my-network goimg
